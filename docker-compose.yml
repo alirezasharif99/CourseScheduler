@@ -1,0 +1,53 @@
+version: '3.9'
+services:
+  app:
+    container_name: app
+    build:
+      context: ./client
+      target: 'base'
+    depends_on:
+      - api
+    ports:
+      - '443:443'
+    volumes:
+      - ./client:/src
+      - /src/node_modules
+    environment:
+      - HTTPS=true
+      - PORT=443
+    command: ['npm', 'start']
+  api:
+    container_name: api
+    build: ./server
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - FLASK_ENV=development
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./server:/src
+    command: ['flask', '--app', 'app', '--debug', 'run', '--host', '0.0.0.0', '--port', '3001']
+  db:
+    container_name: db
+    image: postgres:latest
+    restart: unless-stopped
+    logging:
+      driver: none
+    environment:
+      - POSTGRES_DB=scheduler
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  db:
+    driver: local

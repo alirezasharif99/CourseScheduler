@@ -1,0 +1,20 @@
+#!/usr/bin/python3
+
+import os
+import psycopg2
+
+db = psycopg2.connect(database="scheduler",
+                        host="localhost",
+                        user="postgres",
+                        password="postgres",
+                        port="5432")
+
+cursor = db.cursor()
+for filename in os.listdir('data/seeds'):
+  f = os.path.join('data/seeds', filename)
+  
+  if os.path.isfile(f):
+    cursor.execute(open(f, 'r').read())
+
+db.commit()
+db.close()

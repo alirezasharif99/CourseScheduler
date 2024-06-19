@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler-gke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scheduler
+  template:
+    metadata:
+      labels:
+        app: scheduler
+    spec:
+      containers:
+        - name: scheduler-api
+          image: us-east1-docker.pkg.dev/cis3760-web-app/scheduler-repo/scheduler-api:<VERSION>
+          imagePullPolicy: Always
+          # This app listens on port 5000 for web traffic by default.
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: '5000'
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: password
+          resources:
+            limits:
+              memory: '496Mi'
+              cpu: '150m'
+            requests:
+              memory: '496Mi'
+              cpu: '150m'
+        - name: scheduler-app
+          image: us-east1-docker.pkg.dev/cis3760-web-app/scheduler-repo/scheduler-app:<VERSION>
+          imagePullPolicy: Always
+          # This app listens on port 443 for web traffic by default.
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          resources:
+            limits:
+              memory: '16Mi'
+              cpu: '100m'
+            requests:
+              memory: '16Mi'
+              cpu: '100m'

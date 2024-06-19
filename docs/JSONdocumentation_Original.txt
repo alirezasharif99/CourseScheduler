@@ -1,0 +1,43 @@
+JSON format for a course section
+
+{"term":string,"open":bool,"department":string,"courseCode":integer,"section":string,"num":string,"courseName":string,"location":string,"meeting":["{meetingJSON}"],"faculty":string,"registeredStudents":integer,"capacity":integer,"credits":number,"academicLevel":string}
+
+term: The term the course is offered in, e.g. "Fall 2022"
+open: Whether the course is open (true) or closed (false)
+department: The department the course belongs to e.g. "CIS"
+courseCode: The course code e.g. 3760
+section: The section number e.g. "0102"
+num: A number of unknown importance. Included just in case, e.g. "7264"
+courseName: Name of the course e.g. "Software Engineering"
+location: The campus the course is on, e.g. "Guelph"
+meeting: An array of meeting JSONs as a string. See below
+faculty: The instructor for the course e.g. "G. Klotz"
+registeredStudents: Number of students registered for a course. e.g. 0
+capacity: How many students can register for a course e.g. 32
+credits: How many credits the course is worth e.g. 0.75
+academicLevel: Course level e.g. "Undergraduate"
+
+------------------------------------------------------------------------------------------------
+
+JSON format for meeting times
+
+{"type":string,"day":string,"startTime":string,"endTime":string,"building":string,"room":string}
+
+type: Whether the meeting is a lecture, lab, seminar or exam e.g. "LEC"
+day: Day(s) of the week the meeting is held e.g. "Tues, Thur"
+startTime: Starting time for the meeting e.g "08:30AM"
+endTime: Ending time for the meeting e.g "09:50AM"
+building: Building in which the meeting is held e.g. "RICH"
+room: Room where the meeting is held e.g. "2529"
+
+------------------------------------------------------------------------------------------------
+
+Example of the JSON format for course sections
+
+{"term":"Fall 2022","open":false,"department":"CIS","courseCode":3760,"section":"0102","num":"7264","courseName":"Software Engineering","location":"Guelph","meeting":["{"type":"LEC","day":"Tues, Thur","startTime":"08:30AM","endTime":"09:50AM","building":"RICH","room":"2529"}","{"type":"LAB","day":"Mon","startTime":"02:30PM","endTime":"04:20PM","building":"THRN","room":"2420"}"],"faculty":"G. Klotz","registeredStudents":0,"capacity":32,"credits":0.75,"academicLevel":"Undergraduate"}
+
+Example of JSON format for meetings
+
+{"type":"LEC","day":"Tues, Thur","startTime":"08:30AM","endTime":"09:50AM","building":"RICH","room":"2529"}
+
+{"type":"LAB","day":"Mon","startTime":"02:30PM","endTime":"04:20PM","building":"THRN","room":"2420"}

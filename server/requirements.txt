@@ -1,0 +1,4 @@
+Flask
+gunicorn
+pylint
+psycopg2-binary

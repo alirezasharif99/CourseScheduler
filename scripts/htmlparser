@@ -1,0 +1,114 @@
+#!/usr/bin/python3
+
+# Authored by Ali and Mack
+
+import json
+import sys
+
+from src.htmlparser.core import HTMLCourseParser
+
+def usage():
+	print('Usage: htmlparser <html_file> [--create-seed <seed_name>]')
+
+if len(sys.argv) < 4:
+    usage()
+    sys.exit(1)
+
+file = sys.argv[1]
+
+# count is only used for debugging, if the parser fails at a line in the HTMl this will tell us which line if we print it
+# could be used to implement easy debug mode in the future
+count = 0
+
+parser = HTMLCourseParser()
+
+try:
+    with open(file, 'r') as f:
+        for line in f:
+            count += 1
+            parser.feed(line)
+except IOError:
+    print("File not found.")
+    parser.close()
+    sys.exit(1)
+
+# close method flushes parser buffer and forces the processing of remaining data
+parser.close()
+
+# create either .sql or .json output
+if sys.argv[2] == '--create-seed':
+    # produce sql output
+
+    with open('data/seeds/' + sys.argv[3] + '.sql', 'w+') as f:
+    
+        f.write((
+            f'CREATE TABLE IF NOT EXISTS sections ('
+            f'section_id INT,'
+            f'department VARCHAR(50) NOT NULL,'
+            f'course_code VARCHAR(8) NOT NULL,'
+            f'course_name VARCHAR NOT NULL,'
+            f'section VARCHAR(8) NOT NULL,'
+            f'sem VARCHAR(8) NOT NULL,'
+            f'status VARCHAR(32) NOT NULL,'
+            f'faculty VARCHAR(128) NOT NULL,'
+            f'location VARCHAR(32) NOT NULL,'
+            f'available INT NOT NULL,'
+            f'capacity INT NOT NULL,'
+            f'credits VARCHAR(8) NOT NULL,'
+            f'academic_level VARCHAR(128) NOT NULL,'
+            f'PRIMARY KEY (section_id, sem));\n\n'
+        ))
+
+        f.write(f'CREATE INDEX IF NOT EXISTS idx_section_search ON sections(department, course_code, course_name, section, sem, faculty);\n\n')
+
+        f.write((
+            f'CREATE TABLE IF NOT EXISTS meetings ('
+            f'meeting_id SERIAL PRIMARY KEY,'
+            f'section_id INT NOT NULL,'
+            f'sem VARCHAR(8) NOT NULL,'
+            f'meeting_type VARCHAR(32) NOT NULL,'
+            f'meeting_day VARCHAR(32) NOT NULL,'
+            f'start_time TIME,'
+            f'end_time TIME,'
+            f'building VARCHAR(128) NOT NULL,'
+            f'room VARCHAR(64) NOT NULL,'
+            f'exam_date DATE);\n\n'
+        ))
+                 
+        f.write((f'CREATE TABLE IF NOT EXISTS semesters (sem VARCHAR(10) NOT NULL PRIMARY KEY, semester_name VARCHAR(20) NOT NULL);\n\n')) 
+
+        semesters = {}
+        
+        for course_code, sections in parser.get_course_dict().items():
+            for section in sections:
+                semester = section['term'][0] + section['term'][-2:]
+                semesters[semester] = section['term']
+
+                course_name = section['courseName'].replace("'", r"''")
+                faculty = section['faculty'].replace("'", r"''")
+
+                f.write(f'INSERT INTO sections (section_id, department, course_code, course_name, section, sem, status, faculty, location, available, capacity, credits, academic_level) VALUES ({section["num"]}, \'{section["department"]}\', \'{section["courseCode"]}\', \'{course_name}\', \'{section["section"]}\', \'{semester}\', \'{section["status"]}\', \'{faculty}\', \'{section["location"]}\', {section["available"]}, {section["capacity"]}, \'{section["credits"]}\', \'{section["academicLevel"]}\') ON CONFLICT ON CONSTRAINT sections_pkey DO NOTHING;\n')
+
+                for meeting in section['meeting']:
+                    # to_char(to_timestamp('04:30PM', 'HH12:MIAM'), 'HH24:MI:SS')::TIME
+                    start_time = f'TO_CHAR(TO_TIMESTAMP(\'{meeting["start_time"]}\', \'HH12:MIAM\'), \'HH24:MI:SS\')::TIME' if 'TBA' not in meeting['start_time'] else 'NULL'
+                    end_time = f'TO_CHAR(TO_TIMESTAMP(\'{meeting["end_time"]}\', \'HH12:MIAM\'), \'HH24:MI:SS\')::TIME' if 'TBA' not in meeting['end_time'] else 'NULL'
+
+                    exam_date = "NULL"
+                    if meeting['meeting_type'] == "EXAM":
+                        tokens = meeting['end_time'].split(" ")
+                        end_time = f'TO_CHAR(TO_TIMESTAMP(\'{tokens[0]}\', \'HH12:MIAM\'), \'HH24:MI:SS\')::TIME'
+                        exam_date = "TO_TIMESTAMP(\'" + tokens[1][1:-1] + "\', \'YYYY/MM/DD\')" # takes parentheses out of the date
+                    f.write(f'INSERT INTO meetings (section_id, sem, meeting_type, meeting_day, start_time, end_time, building, room, exam_date) VALUES ({section["num"]}, \'{semester}\', \'{meeting["meeting_type"]}\', \'{meeting["meeting_day"]}\', {start_time}, {end_time}, \'{meeting["building"]}\', \'{meeting["room"]}\', {exam_date}) ON CONFLICT ON CONSTRAINT meetings_pkey DO NOTHING;\n')
+            f.write('\n')
+
+        for sem, sem_name in semesters.items():
+            f.write(f'INSERT INTO semesters (sem, semester_name) VALUES (\'{sem}\', \'{sem_name}\') ON CONFLICT ON CONSTRAINT semesters_pkey DO NOTHING;\n\n')
+
+else:
+    with open('data/results.json', 'w') as f:
+        json.dump(parser.get_course_dict(), f, indent=4)
+
+    # then we create the JSON containing mappings of course codes to course names
+    with open('data/course_mapping.json', 'w') as f:
+        json.dump(parser.get_course_mapping(), f, indent=4)

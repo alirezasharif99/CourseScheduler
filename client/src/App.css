@@ -1,0 +1,82 @@
+:root {
+  --background: #000000;
+  --background-courses: #303245;
+  --background-btn-navy: #4d5169;
+  --background-btn-navy-hover: #6d718a;
+  --text-primary: white;
+}
+
+[data-theme="Light"] {
+  --background: #ffffff;
+  --background-courses: #c1c1cd;
+  --background-btn-navy: #dddee7;
+  --background-btn-navy-hover: #e4e6ef;
+  --text-primary: black;
+}
+
+html,
+body {
+  background-color: var(--background);
+  height: 100vh !important;
+}
+
+.App {
+  height: 100%;
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+.courses {
+  background-color: var(--background-courses);
+}
+
+.selectedSections {
+  max-height: none !important;
+}
+
+.courseResults {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.departmentsList {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.accordion-header span {
+  max-width: 90%;
+}
+
+.btn-navy {
+  background-color: var(--background-btn-navy);
+  color: var(--text-primary);
+}
+
+.btn-navy:hover {
+  background-color: var(--background-btn-navy-hover);
+}
+
+.helpTooltip {
+  font-size: 25px;
+  float: right;
+  line-height: 40px;
+}
+
+.switch-theme {
+  float: right;
+  background-color: var(--background-courses);
+  color: var(--text-primary);
+}
+
+.switch-theme:hover {
+  background-color: var(--background-courses);
+  color: var(--text-primary);
+}
+
+.logo {
+  color: (var(--text-primary));
+  margin-left: 1.5%;
+  margin-top: 2%;
+  margin-bottom: 2%;
+}
